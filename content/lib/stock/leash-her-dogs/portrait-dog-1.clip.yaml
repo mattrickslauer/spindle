@@ -1,0 +1,64 @@
+schema: rtf.clip/v1
+id: portrait-dog-1
+media: portrait-dog-1.mp4
+title: a dog has hung itself in a frame as the museum's top muse
+logline: a dog has hung itself in a frame as the museum's top muse
+source_meta:
+  duration_ms: 1625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: generated
+  owner: Just One Branch
+  license: owned
+  notes: 'generated: gemini-3.1-flash-image -> veo-3.1-fast-generate-preview'
+provenance:
+  file: /home/mattricks/Code/spindle/.claude/worktrees/top-muse-meme/content/.cache/gen/veo-f3ee4559957b33b1.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 1.625
+  image_model: gemini-3.1-flash-image
+  video_model: veo-3.1-fast-generate-preview
+  motion: The afghan hound holds its noble pose, then slowly turns its head to stare
+    directly into camera. Its hair shifts slightly. Very slow push in.
+  image: A regal afghan hound with long flowing silky hair sits perfectly still inside
+    a huge ornate gilded picture frame hanging on a museum wall, posing like an old
+    master portrait, spotlit from above. A small museum placard beside it.
+  frame: null
+features:
+  energy: 0.286
+  luma: 0.213
+  contrast: 0.732
+  warmth: 0.716
+  saturation: 0.168
+  detail: 0.257
+  intensity_raw: 0.347
+axes:
+  light:
+    v: 0.213
+    pole: dark
+  motion:
+    v: 0.286
+    pole: still
+  temp:
+    v: 0.716
+    pole: warm
+  scale:
+    v: 0.257
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 1625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true

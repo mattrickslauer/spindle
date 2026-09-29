@@ -1,0 +1,64 @@
+schema: rtf.clip/v1
+id: dalmatian-bench
+media: dalmatian-bench.mp4
+title: a dalmatian taking the visitor's bench
+logline: a dalmatian taking the visitor's bench
+source_meta:
+  duration_ms: 7625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: generated
+  owner: Just One Branch
+  license: owned
+  notes: 'generated: gemini-3.1-flash-image -> veo-3.1-fast-generate-preview'
+provenance:
+  file: /home/mattricks/Code/spindle/.claude/worktrees/top-muse-meme/content/.cache/gen/veo-de23007ca3a7833e.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 7.625
+  image_model: gemini-3.1-flash-image
+  video_model: veo-3.1-fast-generate-preview
+  motion: The dalmatian bounces on the bench barking, then leaps off the bench toward
+    camera. Quick handheld whip pan.
+  image: A dalmatian standing on a museum viewing bench in the middle of a gallery,
+    in front of a large gilded painting, barking joyfully, a knocked-over velvet rope
+    barrier on the floor beside it.
+  frame: null
+features:
+  energy: 0.581
+  luma: 0.331
+  contrast: 0.887
+  warmth: 0.747
+  saturation: 0.194
+  detail: 0.116
+  intensity_raw: 0.495
+axes:
+  light:
+    v: 0.331
+    pole: dark
+  motion:
+    v: 0.581
+    pole: mid
+  temp:
+    v: 0.747
+    pole: warm
+  scale:
+    v: 0.116
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 7625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true
