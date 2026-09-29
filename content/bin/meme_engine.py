@@ -41,7 +41,13 @@ import rtf
 
 FPS = 30
 W, H = 1080, 1920
-FONT = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+# First one that exists: the engine was written on a Mac and also has to run on Linux.
+FONT = next((f for f in (
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "/usr/share/fonts/julietaula-montserrat-fonts/Montserrat-Black.otf",
+    "/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+) if Path(f).exists()), "DejaVu Sans")
 
 AXES = ["light", "motion", "temp", "scale"]
 
@@ -100,6 +106,80 @@ def match_gamma(luma: float, target: float = 0.30) -> float:
     L = min(max(luma, 0.02), 0.95)
     g = math.log(L) / math.log(target)
     return round(min(1.9, max(0.75, g)), 3)
+
+
+# ---------------------------------------------------------------- captions
+
+
+def read_lrc(path: Path) -> list[tuple[float, str]]:
+    """[(seconds, line)] from an .lrc. Lines without a timestamp are notes, not lyrics."""
+    out = []
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        if not raw.startswith("[") or "]" not in raw:
+            continue
+        stamp, text = raw[1:].split("]", 1)
+        try:
+            m, sec = stamp.split(":")
+            t = int(m) * 60 + float(sec)
+        except ValueError:
+            continue                      # [ar:…] style tags
+        if text.strip():
+            out.append((t, text.strip()))
+    return sorted(out)
+
+
+def ass_time(t: float) -> str:
+    t = max(0.0, t)
+    cs = int(round(t * 100))
+    return f"{cs // 360000}:{cs // 6000 % 60:02d}:{cs // 100 % 60:02d}.{cs % 100:02d}"
+
+
+def ass_text(s: str) -> str:
+    return s.replace("{", "(").replace("}", ")")
+
+
+def write_ass(path: Path, lyrics: list[tuple[float, str]], audio_start: float,
+              end_t: float, caption: str | None) -> None:
+    """Burn-in captions: a meme line on top, the sung lyric at the bottom.
+
+    Both stop where the end card starts — the card is the release and should be alone.
+    Placement keeps inside TikTok/Reels chrome: nothing in the top ~220px (status and
+    tabs) and nothing below ~1420px (caption, handle, sound), and a right margin clear of
+    the like/comment rail.
+
+    Lyric timing is the .lrc's line starts, shifted by where the audio is cut from. A line
+    ends at the next line's start (or 4.5s, whichever is sooner): an .lrc has no end
+    times, and a line left up through an instrumental reads as a stuck subtitle.
+    """
+    font = "Montserrat"
+    head = f"""[Script Info]
+ScriptType: v4.00+
+PlayResX: {W}
+PlayResY: {H}
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,{font} ExtraBold,70,&H00111111,&H00111111,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,3,18,0,8,90,90,250,1
+Style: Lyric,{font} Black,86,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,7,2,2,80,140,540,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+    ev = []
+    if caption:
+        ev.append(f"Dialogue: 1,{ass_time(0)},{ass_time(end_t)},Caption,,0,0,0,,"
+                  f"{ass_text(caption)}")
+    for k, (t, line) in enumerate(lyrics):
+        a = t - audio_start
+        nxt = lyrics[k + 1][0] - audio_start if k + 1 < len(lyrics) else a + 4.5
+        b = min(nxt, a + 4.5, end_t)
+        if b <= 0.05 or a >= end_t:
+            continue
+        ev.append(f"Dialogue: 0,{ass_time(a)},{ass_time(b)},Lyric,,0,0,0,,"
+                  f"{ass_text(line)}")
+    path.write_text(head + "\n".join(ev) + "\n", encoding="utf-8")
 
 
 # ---------------------------------------------------------------- library
@@ -364,14 +444,15 @@ def pick_windows(order: list[dict], slots: list[dict], seed: int) -> list[float]
 # ---------------------------------------------------------------- render
 
 
-def build_filter(order, slots, moves, starts, look, total_f, drop_f, cta, cta_sub):
+def build_filter(order, slots, moves, starts, look, total_f, drop_f, cta, cta_sub,
+                 exposure=0.30, ass=None):
     parts, labels = [], []
     for i, (clip, s, mv, st) in enumerate(zip(order, slots, moves, starts)):
         d = s["frames"] / FPS
         chain = (f"[{i}:v]trim=start={st:.3f}:duration={d + 0.4:.3f},"
                  f"setpts=PTS-STARTPTS,fps={FPS},"
                  f"tpad=stop_mode=clone:stop_duration=2")
-        g = match_gamma(clip["features"]["luma"])
+        g = match_gamma(clip["features"]["luma"], exposure)
         if abs(g - 1.0) > 0.02:
             chain += f",eq=gamma={g}"
         z = MOVES[mv]
@@ -401,6 +482,10 @@ def build_filter(order, slots, moves, starts, look, total_f, drop_f, cta, cta_su
                  f"{flash_t + 2.0 / FPS:.3f})'[flash]")
     stream = "[flash]"
 
+    if ass:
+        parts.append(f"{stream}ass='{ass}'[subbed]")
+        stream = "[subbed]"
+
     if cta:
         end_t = (total_f - slots[-1]["frames"]) / FPS
         en = f"enable='gte(t,{end_t:.3f})'"
@@ -420,7 +505,7 @@ def build_filter(order, slots, moves, starts, look, total_f, drop_f, cta, cta_su
 
 
 def render(order, slots, moves, starts, song_path, audio_start_s, total_f,
-           drop_f, look, cta, cta_sub, out: Path) -> int:
+           drop_f, look, cta, cta_sub, out: Path, exposure=0.30, ass=None) -> int:
     inputs = []
     for clip in order:
         inputs += ["-i", str(clip["_path"])]
@@ -428,7 +513,7 @@ def render(order, slots, moves, starts, song_path, audio_start_s, total_f,
     inputs += ["-ss", f"{audio_start_s:.3f}", "-i", str(song_path)]
 
     fc, vlab = build_filter(order, slots, moves, starts, look, total_f, drop_f,
-                            cta, cta_sub)
+                            cta, cta_sub, exposure, ass)
     total_s = total_f / FPS
     fc += (f";[{ai}:a]atrim=duration={total_s:.3f},asetpts=N/SR/TB,"
            f"afade=t=in:st=0:d=0.04,"
@@ -485,6 +570,13 @@ def main() -> int:
     ap.add_argument("--max-axis-run", type=int, default=2)
     ap.add_argument("--cta", default=None, help="end card headline; '' to disable")
     ap.add_argument("--cta-sub", default="stream now — link in bio")
+    ap.add_argument("--exposure", type=float, default=0.30,
+                    help="luma every clip is matched toward; 0.30 suits night footage, "
+                         "a bright library wants ~0.5")
+    ap.add_argument("--lrc", default=None,
+                    help="burn in lyrics from this .lrc ('song' = the song's lyrics_timed)")
+    ap.add_argument("--caption", action="append", default=[],
+                    help="meme line on top; repeat to give each variant its own")
     ap.add_argument("--check", action="store_true", help="print the plan, render nothing")
     args = ap.parse_args()
 
@@ -513,6 +605,12 @@ def main() -> int:
 
     outdir = Path(args.out)
     outdir.mkdir(parents=True, exist_ok=True)
+
+    lyrics = []
+    if args.lrc:
+        lrc = Path(song["lyrics_timed"] if args.lrc == "song" else args.lrc)
+        lyrics = read_lrc(lrc if lrc.is_absolute() else song_file.parent / lrc)
+    end_t = (total_f - slots[-1]["frames"]) / FPS
 
     print(f"library {lib}  {len(clips)} clips")
     print(f"song    {song['title']} @ {song['measured']['bpm']} bpm, "
@@ -550,8 +648,18 @@ def main() -> int:
             print(f"  (check) would write {out}\n")
             continue
 
+        ass = None
+        caption = args.caption[v % len(args.caption)] if args.caption else None
+        if lyrics or caption:
+            ass = outdir / f"{outdir.name}-v{v + 1}.ass"
+            write_ass(ass, lyrics, audio_start, end_t, caption)
+            plan["caption"] = caption
+            (outdir / f"{outdir.name}-v{v + 1}.plan.yaml").write_text(
+                yaml.safe_dump(plan, sort_keys=False, allow_unicode=True))
+
         rc = render(order, slots, moves, starts, song_path, audio_start, total_f,
-                    drop_f, args.look, cta, args.cta_sub, out)
+                    drop_f, args.look, cta, args.cta_sub, out, args.exposure,
+                    ass.resolve() if ass else None)
         print(f"  -> {out}" if rc == 0 else f"  ffmpeg failed rc={rc}", "\n")
 
     return 0

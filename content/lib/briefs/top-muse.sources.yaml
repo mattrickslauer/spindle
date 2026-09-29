@@ -1,0 +1,62 @@
+schema: rtf.sources/v1
+id: top-muse
+# Everything here is Just One Branch's own: the cover, the song-page loop, the museum and
+# Gavel shots generated for the band, and band photos. Paths point into the J1B repo and
+# ~/Videos on the machine that made the library; the media is not committed (see
+# .gitignore), this list is the recipe for rebuilding it.
+owner: Just One Branch
+sources:
+  # --- the song's own picture: a gold face rising out of cloud over a peach sea
+  - id: museum
+    kind: video
+    file: ~/Videos/top-muse-museum.mp4
+    wants: the cover hung in a gallery under one spotlight; the hook's establishing shot
+  - id: loop
+    kind: video
+    file: ~/Code/J1B/masters/loops/TopMuseLoop.mov
+    wants: the song-page loop — framed cover, then Anthony's face, then the frame again
+  - id: cover
+    kind: still
+    file: ~/Code/J1B/masters/art/top-muse.png
+    wants: the whole collage
+  - id: cover-face
+    kind: still
+    file: ~/Code/J1B/masters/art/top-muse.png
+    crop: [0.28, 0.15, 0.44, 0.50]
+    wants: the muse's face
+  - id: cover-lips
+    kind: still
+    file: ~/Code/J1B/masters/art/top-muse.png
+    crop: [0.35, 0.34, 0.30, 0.32]
+    wants: the red mouth, close
+  - id: cover-sea
+    kind: still
+    file: ~/Code/J1B/masters/art/top-muse.png
+    crop: [0.30, 0.70, 0.35, 0.30]
+    wants: torn-paper sea and palm tops
+  # --- the band
+  - id: amanda
+    kind: still
+    file: ~/Code/J1B/masters/art/AmandaKurt.jpeg
+    wants: Amanda, straight to camera
+  - id: anthony
+    kind: still
+    file: ~/Code/J1B/masters/art/MattricksLauer.jpeg
+    wants: Anthony, straight to camera
+  - id: duo
+    kind: still
+    file: ~/Code/J1B/masters/art/profile-shot.jpeg
+    wants: the two of them, black and white
+  # --- the Gavel world: pixel-sky chase, generated with Veo from Gavel.png
+  - id: gavel-still
+    kind: still
+    file: ~/Code/J1B/assets/Gavel.png
+    wants: the band posed under a giant gavel
+  - id: gavel-chase
+    kind: video
+    file: ~/Code/J1B/assets/Gavel-chase.mp4
+    wants: running from the gavel
+  - id: gavel-chase-v2
+    kind: video
+    file: ~/Code/J1B/assets/Gavel-chase-v2.mp4
+    wants: running from the gavel as it explodes

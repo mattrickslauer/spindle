@@ -1,0 +1,45 @@
+schema: rtf.song/v1
+id: top-muse
+title: "Top Muse"
+artist: "Just One Branch"
+# The master lives in the J1B repo, not here: this repo commits descriptors, not media.
+file: /home/mattricks/Code/J1B/masters/TopMuse.wav
+lyrics_timed: /home/mattricks/Code/J1B/lyrics/top-muse.lrc
+release_date: 2026-10-16
+url: https://justonebranch.com/music/top-muse/
+
+rights:
+  license: owned              # Anthony Tedesco: 100% writer, publisher and master owner.
+  notes: "Owned master and composition. No sync clearance needed."
+
+# ---------------------------------------------------------------------------
+# MEASURED, NOT TYPED.
+#
+#     python3 bin/measure_beat.py masters/TopMuse.wav --drop-ms 50990 --cuts 23
+#
+# measure_beat reported 191.41 via its local pulse and flagged double-time ambiguity; the
+# global comb said 96.30. 96.3 is right: the lyric lines land every 4.98s (11.08, 16.06,
+# 21.18, 25.97 …) = exactly 2 bars at 96.3, and a fine comb over the whole track peaks
+# at 96.3 (score 2.98) against 2.29 at 96.2 and 2.36 at 96.4.
+#
+# The drop: the site's section list says "Chorus" at 0:50, and the lyric "No no no no"
+# is timed at 50.99. Neither is a downbeat. At 96.3 the two candidate bar phases near
+# there are 50387 and 51641; low-band flux on the bar lines averages 5.70 on the 51641
+# grid against 4.80 on the other, so 51641 is the one. "No no no no" is the pickup one
+# beat before it (51641 - 623 = 51018 ≈ 50.99). Bar RMS confirms the section edge: the
+# bar at 46.7s dips to -15.1 dB, and from 49.2s to 69.1s the song sits at -11.7 to
+# -12.8 dB, 2-3 dB above the verse.
+# ---------------------------------------------------------------------------
+measured:
+  bpm: 96.30
+  beat_ms: 623                # 60000 / bpm — derived, restated here for reading only
+  bar_ms: 2492
+  drop_ms: 51641
+  method: >
+    Global comb 96.30; measure_beat's local pulse read the 191.41 double-time alias.
+    Drop phase chosen by low-band (kick) flux on bar lines, 51641 over 50387.
+
+tuning:
+  carousel_beats: 18          # 16 one-beat cuts + a 2-beat end card. 16 beats after the
+                              # drop is 9.97s, through "She doesn't want to leash her
+                              # dogs" and into the second "No no no no" at 60.64.

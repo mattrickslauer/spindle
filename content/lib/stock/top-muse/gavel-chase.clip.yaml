@@ -1,0 +1,56 @@
+schema: rtf.clip/v1
+id: gavel-chase
+media: gavel-chase.mp4
+title: running from the gavel
+logline: running from the gavel
+source_meta:
+  duration_ms: 7625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: owned
+  owner: Just One Branch
+  license: owned
+  notes: label-owned media
+provenance:
+  file: /home/mattricks/Code/J1B/assets/Gavel-chase.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 7.625
+features:
+  energy: 1.0
+  luma: 0.412
+  contrast: 0.928
+  warmth: 0.536
+  saturation: 0.187
+  detail: 0.084
+  intensity_raw: 0.686
+axes:
+  light:
+    v: 0.412
+    pole: mid
+  motion:
+    v: 1.0
+    pole: kinetic
+  temp:
+    v: 0.536
+    pole: mid
+  scale:
+    v: 0.084
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 7625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true

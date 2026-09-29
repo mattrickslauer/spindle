@@ -1,0 +1,56 @@
+schema: rtf.clip/v1
+id: loop-4
+media: loop-4.mp4
+title: the song-page loop — framed cover, then Anthony's face, then the frame again
+logline: the song-page loop — framed cover, then Anthony's face, then the frame again
+source_meta:
+  duration_ms: 1375
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: owned
+  owner: Just One Branch
+  license: owned
+  notes: label-owned media
+provenance:
+  file: /home/mattricks/Code/J1B/masters/loops/TopMuseLoop.mov
+  kind: video
+  crop: null
+  section_start_s: 5.125
+  section_dur_s: 1.375
+features:
+  energy: 0.127
+  luma: 0.114
+  contrast: 0.648
+  warmth: 0.586
+  saturation: 0.065
+  detail: 0.074
+  intensity_raw: 0.211
+axes:
+  light:
+    v: 0.114
+    pole: dark
+  motion:
+    v: 0.127
+    pole: still
+  temp:
+    v: 0.586
+    pole: mid
+  scale:
+    v: 0.074
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 1375
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true
