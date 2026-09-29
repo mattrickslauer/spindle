@@ -522,7 +522,13 @@ def render(order, slots, moves, starts, song_path, audio_start_s, total_f,
     cmd = ["ffmpeg", "-y", "-v", "error", *inputs,
            "-filter_complex", fc, "-map", vlab, "-map", "[aout]",
            "-frames:v", str(total_f),
-           "-c:v", "libx264", "-crf", "20", "-preset", "medium", "-pix_fmt", "yuv420p",
+           # The overlay/concat graph hands out a 1/1000000 timebase; x264 then sizes the
+           # level for a million-fps stream (6.2), which phones, QuickTime and browsers
+           # refuse to open. Pin the rate and level, and carry nothing but video + audio.
+           "-r", str(FPS), "-video_track_timescale", str(FPS * 1000),
+           "-dn", "-sn", "-map_chapters", "-1", "-map_metadata", "-1",
+           "-c:v", "libx264", "-profile:v", "high", "-level:v", "4.2",
+           "-crf", "20", "-preset", "medium", "-pix_fmt", "yuv420p",
            "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out)]
     return subprocess.call(cmd)
 
