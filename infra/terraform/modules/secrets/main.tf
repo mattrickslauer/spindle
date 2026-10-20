@@ -26,8 +26,7 @@ variable "secret_names" {
     "GMI_API_KEY",
     "OPENAI_API_KEY",
     "ELEVENLABS_API_KEY",
-    # ZeptoMail's SMTP password, which is also its send-mail token.
-    "ZEPTOMAIL_TOKEN",
+    # Mail is Resend, whose key is shared at /resend/api-key — see modules/api.
     # Signs console sessions and hashes OTP codes. Rotating it signs everyone out —
     # which is the only revocation a stateless session has, so it is worth knowing.
     # Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'

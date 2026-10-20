@@ -285,16 +285,13 @@ def _build_auth(settings: Settings, accounts: AccountService) -> AuthProvider:
 
 
 def _build_mailer(settings: Settings) -> Mailer:
-    if settings.mail_backend == "zeptomail":
-        from remixkit.adapters.mailer_zepto import ZeptoMailer
+    if settings.mail_backend == "resend":
+        from remixkit.adapters.mailer_resend import ResendMailer
 
-        return ZeptoMailer(
-            token=settings.zeptomail_token,
+        return ResendMailer(
+            api_key=settings.resend_api_key,
             sender=settings.mail_from,
             sender_name=settings.mail_from_name,
-            host=settings.smtp_host,
-            port=settings.smtp_port,
-            user=settings.smtp_user,
         )
     return ConsoleMailer()
 

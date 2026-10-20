@@ -93,7 +93,7 @@ Seven axes, seven environment variables:
 | `RK_STORAGE_BACKEND` | `local` | `b2` |
 | `RK_GENERATOR_BACKEND` | `mock` | `genblaze` |
 | `RK_QUEUE_BACKEND` | `inline` | `sqs` |
-| `RK_MAIL_BACKEND` | `console` | `zeptomail` |
+| `RK_MAIL_BACKEND` | `console` | `resend` |
 | `RK_AUTH_BACKEND` | `none` | `otp` |
 | `RK_ANALYSIS_BACKEND` | `auto` | `auto` |
 | `RK_TRANSCRIPTION_BACKEND` | `auto` | `auto` |
@@ -1078,11 +1078,11 @@ Turning it on:
 
 ```bash
 RK_AUTH_BACKEND=otp
-RK_MAIL_BACKEND=zeptomail
+RK_MAIL_BACKEND=resend
 RK_ALLOWED_EMAILS=you@agfarms.dev,colleague@agfarms.dev   # this IS the user table
 RK_SESSION_SECRET=$(python -c 'import secrets;print(secrets.token_urlsafe(32))')
-RK_ZEPTOMAIL_TOKEN=…                                      # = the SMTP password
-RK_MAIL_FROM=rtp@agfarms.dev                              # a verified ZeptoMail sender
+RK_RESEND_API_KEY=re_…                                    # in prod: SSM /resend/api-key
+RK_MAIL_FROM=rtp@mattrickslauer.com                       # on a domain verified in Resend
 ```
 
 Four choices worth knowing about, each with a defensible opposite — the reasoning is in
@@ -1111,7 +1111,7 @@ Two guards, both refusing to start rather than warning: `RK_REQUIRE_AUTH=true` w
 
 In prod these are Terraform variables rather than a `.env`, and
 `infra/terraform/envs/prod/variables.tf` now defaults to `auth_backend = "otp"` and
-`require_auth = true`. Put `SESSION_SECRET` and `ZEPTOMAIL_TOKEN` into SSM **before**
+`require_auth = true`. Put `/remixkit/prod/SESSION_SECRET` and the shared `/resend/api-key` into SSM **before**
 the first apply — with `require_auth` on, a missing signing key is a function that does
 not boot, which is the intended failure but an opaque one if you were not expecting it.
 

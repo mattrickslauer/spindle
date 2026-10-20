@@ -11,5 +11,5 @@ b2_bucket = "remixkit-prod"
 
 # Who can sign in. Overrides the default in variables.tf. There is no sign-up — an
 # address not on this list is refused before a code is sent. Put SESSION_SECRET and
-# ZEPTOMAIL_TOKEN in SSM before the first apply; see variables.tf for the two commands.
+# /resend/api-key in SSM before the first apply; see variables.tf for the two commands.
 # allowed_emails = ["anthonybtedesco@gmail.com", "colleague@label.example"]

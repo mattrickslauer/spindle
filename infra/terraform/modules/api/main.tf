@@ -62,7 +62,7 @@ variable "queue_backend" {
 
 # Auth defaults to `none` — the same shape this deployment has always had, so applying
 # this change alone does not lock anyone out of a running console. Turning it on is
-# deliberate: set `auth_backend = "otp"`, populate ZEPTOMAIL_TOKEN and SESSION_SECRET in
+# deliberate: set `auth_backend = "otp"`, populate /resend/api-key and SESSION_SECRET in
 # SSM, and list the people who may sign in. Doing it in the other order would put a
 # login page in front of a console whose signing key is a per-process random value.
 variable "auth_backend" {
@@ -77,12 +77,19 @@ variable "mail_backend" {
 
 variable "mail_from" {
   type    = string
-  default = "rtp@agfarms.dev"
+  default = "rtp@mattrickslauer.com"
 }
 
 variable "mail_from_name" {
   type    = string
   default = "Respect the Funk"
+}
+
+# The Resend API key is shared across projects, so it lives outside this env's SSM path.
+# bootstrap.load_secrets reads it by name at cold start; "" turns that off.
+variable "resend_key_parameter" {
+  type    = string
+  default = "/resend/api-key"
 }
 
 variable "gcp_project" {
@@ -204,6 +211,15 @@ data "aws_iam_policy_document" "app" {
     ]
   }
 
+  # The one secret outside that path: the shared Resend key, read by name.
+  dynamic "statement" {
+    for_each = var.resend_key_parameter == "" ? [] : [1]
+    content {
+      actions   = ["ssm:GetParameter"]
+      resources = ["arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter${var.resend_key_parameter}"]
+    }
+  }
+
   statement {
     actions   = ["kms:Decrypt"]
     resources = ["*"]
@@ -238,7 +254,7 @@ resource "aws_lambda_function" "this" {
 
   # RK_ALLOWED_EMAILS is not a secret, so it lives here rather than in SSM: an operator
   # adding a colleague should be editing a tfvars line under review, not running
-  # put-parameter by hand. RK_ZEPTOMAIL_TOKEN and RK_SESSION_SECRET *are* secrets, and
+  # put-parameter by hand. RK_RESEND_API_KEY and RK_SESSION_SECRET *are* secrets, and
   # arrive from SSM via bootstrap.load_secrets — they are deliberately absent below.
   environment {
     variables = {
@@ -251,7 +267,9 @@ resource "aws_lambda_function" "this" {
       RK_MAIL_BACKEND      = var.mail_backend
       RK_MAIL_FROM         = var.mail_from
       RK_MAIL_FROM_NAME    = var.mail_from_name
-      RK_ALLOWED_EMAILS    = join(",", var.allowed_emails)
+      # The parameter's *name*, not its value — the key itself never enters state.
+      RK_RESEND_KEY_PARAMETER = var.resend_key_parameter
+      RK_ALLOWED_EMAILS       = join(",", var.allowed_emails)
       # Vertex project/location for the Google (Veo/Imagen) provider fallback. These
       # are not secrets. NOTE: they are not sufficient on their own — Lambda has no
       # Application Default Credentials, so the Google path stays inert here until a

@@ -7,7 +7,7 @@ swap-in list in `deps.py` a one-line change per axis:
     storage   local dir  → Backblaze B2
     generator mock       → Genblaze + GMI Cloud / ElevenLabs
     queue     inline     → SQS + Batch
-    mail      console    → ZeptoMail
+    mail      console    → Resend
     auth      anonymous  → email OTP
 
 None of the five requires touching a service or a route.

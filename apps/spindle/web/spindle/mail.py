@@ -47,6 +47,20 @@ complaints to SNS and Gmail does not, so a tenant on their own mailbox will not 
 `contact_route.state` learn from a hard bounce the way a platform-sent one does. Nothing
 here compensates for that yet; it is recorded rather than solved.
 
+### What changed on 2026-10-19: the platform transport is Resend
+
+`SESMailer` is gone and `ResendMailer` carries the platform identity. The account never
+left the SES sandbox, where every *recipient* must itself be a verified identity — so a
+sign-in code could only reach an address somebody had clicked a link for in the AWS
+console. Resend has no sandbox for a verified domain, and `spindle@mattrickslauer.com`'s
+domain is verified there. The SES identity, DKIM and MAIL FROM records are left in place
+(DNS is not torn down by this change); nothing sends through them.
+
+The reasoning above about *why not Gmail for the platform* stands unchanged — it was an
+argument for a transactional provider, and Resend is one. Resend also reports bounces and
+complaints (by webhook rather than SNS); wiring them to `contact_route.state` is the same
+unsolved item the SES path had.
+
 ## At-most-once, deliberately
 
 The gap between "we called SES" and "we recorded that we called SES" is the only place a
@@ -111,12 +125,6 @@ class Mailer(Protocol):
              idempotency_key: str, reply_to: str = "") -> Sent: ...
 
 
-#: SES hard-fails these; retrying makes the sender's reputation worse, never better.
-_PERMANENT = (
-    "MessageRejected", "MailFromDomainNotVerified", "AccountSendingPausedException",
-    "ConfigurationSetDoesNotExist", "InvalidParameterValue",
-)
-
 #: Characters SES permits in a message tag value: ASCII letters, digits, underscore and
 #: hyphen, and nothing else.
 _TAG_SAFE = re.compile(r"[^A-Za-z0-9_-]")
@@ -134,7 +142,7 @@ def _tag_value(key: str) -> str:
         InvalidParameterValue: Invalid tag value <otp:3f8d0955a…>
 
     Measured against the live deployment on 2026-08-15. `InvalidParameterValue` is in
-    `_PERMANENT` above, so the send was correctly not retried — which meant the whole
+    SES's never-retry list, so the send was correctly not retried — which meant the whole
     sign-in funnel refused, loudly and permanently, for every address. The mail layer
     was doing exactly the right thing with a message it should never have been asked
     to send.
@@ -146,65 +154,115 @@ def _tag_value(key: str) -> str:
     return _TAG_SAFE.sub("_", key)[:256]
 
 
-class SESMailer:
-    """Amazon SES, via boto3.
+#: Resend answers these when the request itself is wrong — a bad key, an unverified From
+#: domain, a malformed address, an idempotency key reused for a different message.
+#: Retrying cannot fix any of them. 429 and 5xx are transient and go back to `pending`.
+_PERMANENT_STATUS = frozenset({400, 401, 403, 404, 405, 409, 422})
 
-    boto3 is not in `requirements.txt` for the same reason `storage.py` gives: the Lambda
-    Python runtime already ships it, and vendoring it costs ~90 MB in a bundle whose whole
-    design is to stay small.
+RESEND_URL = "https://api.resend.com/emails"
 
-    The `idempotency_key` is sent as a custom header rather than passed to an API
-    parameter, because SES has no idempotency parameter. It is there so that a message
-    arriving twice can be *identified* as the same message by anyone reading the raw
-    headers — a forensic aid, not a guarantee. The guarantee is the claim discipline in
-    this module's header.
+#: On 429, wait `retry-after` seconds (at most 2, 1 if absent) and try again, up to
+#: twice more, with the same Idempotency-Key — so a retry Resend already took is a no-op.
+_RETRIES = 2
+_MAX_WAIT_S = 2.0
+
+
+class ResendMailer:
+    """Resend's HTTP API, via `urllib`.
+
+    The standard library rather than the `resend` package, for the reason `SMTPMailer`
+    uses `smtplib`: one POST, and a bundle whose design is to stay small.
+
+    The `idempotency_key` goes in Resend's `Idempotency-Key` header, which deduplicates
+    within 24 hours — so a retried call that Resend had in fact accepted is not a second
+    message. That narrows the double-send window this module's header describes, but the
+    guarantee is still the claim discipline: Resend's window is a day, and ours is forever.
+
+    A `Message-ID` is minted here and sent as a header, and that — not Resend's own email
+    id — is what `Sent.provider_message_id` carries. A curator's client quotes the
+    Message-ID back in `In-Reply-To`, and `inbound`'s second rung matches on exactly that;
+    Resend's id never appears in the mail at all.
     """
 
-    def __init__(self, *, sender: str, reply_to: str, region: str) -> None:
+    def __init__(self, *, api_key: str, sender: str, reply_to: str,
+                 urlopen: Any = None, sleep: Any = None) -> None:
         self.sender = sender
         self.reply_to = reply_to
-        self.region = region
+        # Never placed in a message or a repr — see SMTPMailer's password.
+        self._api_key = api_key
+        self._urlopen = urlopen
+        self._sleep = sleep
 
+    def __repr__(self) -> str:
+        return f"<ResendMailer sender={self.sender!r}>"
 
     def send(self, *, to: str, subject: str, body: str,
              idempotency_key: str, reply_to: str = "") -> Sent:
         """`reply_to` overrides the configured address, per message.
 
-        The instance-level `reply_to` was correct while every message went to the same
-        mailbox, and it stops being correct the moment a reply has to say *which thread*
-        it belongs to. `040_mailbox.sql` explains the mechanism: the platform sends on
-        behalf of every free tenant from one identity, so the routing has to travel in
-        the address itself as `spindle+<reply_token>@…`, and that address differs per
-        send.
-
-        Defaulting to the configured value rather than requiring the argument keeps the
-        transactional path — `otp.py`'s sign-in codes — working unchanged. Those have no
-        thread and want the plain mailbox, and a required parameter would have forced
-        every caller to have an opinion about a feature most of them are not part of.
+        The platform sends on behalf of every free tenant from one identity, so the
+        routing has to travel in the address itself as `spindle+<reply_token>@…`, and
+        that address differs per send (`040_mailbox.sql`). Defaulting to the configured
+        value keeps `otp.py`'s sign-in codes — which have no thread — on the plain
+        mailbox without every caller having an opinion.
         """
-        import boto3                                   # noqa: PLC0415 — see docstring
-        from botocore.exceptions import ClientError    # noqa: PLC0415
+        import json                                   # noqa: PLC0415 — stdlib, lazy
+        import time                                   # noqa: PLC0415
+        import urllib.error                           # noqa: PLC0415
+        import urllib.request                         # noqa: PLC0415
+        from email.utils import make_msgid            # noqa: PLC0415
 
-        client = boto3.client("ses", region_name=self.region)
-        try:
-            response = client.send_email(
-                Source=self.sender,
-                Destination={"ToAddresses": [to]},
-                ReplyToAddresses=[reply_to or self.reply_to],
-                Message={
-                    "Subject": {"Data": subject, "Charset": "UTF-8"},
-                    "Body": {"Text": {"Data": body, "Charset": "UTF-8"}},
-                },
-                Tags=[{"Name": "idempotency-key",
-                       "Value": _tag_value(idempotency_key)}],
-            )
-        except ClientError as exc:
-            code = exc.response.get("Error", {}).get("Code", "")
-            raise MailRefused(f"SES refused: {code}: {exc}",
-                              permanent=code in _PERMANENT) from exc
+        domain = self.sender.rpartition("@")[2].rstrip(">") or None
+        message_id = make_msgid(domain=domain)
+        payload = json.dumps({
+            "from": self.sender,
+            "to": [to],
+            "subject": subject,
+            "text": body,
+            "reply_to": reply_to or self.reply_to,
+            "headers": {
+                "Message-ID": message_id,
+                # The same forensic aid the SMTP and Gmail paths carry.
+                "X-Spindle-Idempotency-Key": _tag_value(idempotency_key),
+            },
+        }).encode("utf-8")
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+            # Resend sits behind a firewall that turns away urllib's own user agent.
+            "User-Agent": "spindle/1.0",
+            "Idempotency-Key": _tag_value(idempotency_key),
+        }
+        urlopen = self._urlopen or urllib.request.urlopen
+        sleep = self._sleep or time.sleep
 
-        return Sent(provider_message_id=response.get("MessageId", ""),
-                    cost_usd="0.0001")
+        for attempt in range(_RETRIES + 1):
+            request = urllib.request.Request(RESEND_URL, data=payload,
+                                             headers=headers, method="POST")
+            try:
+                with urlopen(request, timeout=10) as answer:
+                    answer.read()
+                break
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429 and attempt < _RETRIES:
+                    sleep(_retry_after(exc))
+                    continue
+                detail = exc.read().decode("utf-8", "replace")[:300]
+                raise MailRefused(f"Resend refused: {exc.code}: {detail}",
+                                  permanent=exc.code in _PERMANENT_STATUS) from None
+            except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                raise MailRefused(f"Resend unreachable ({type(exc).__name__})") from None
+
+        return Sent(provider_message_id=message_id.strip("<>"), cost_usd="0.0001")
+
+
+def _retry_after(exc: Any) -> float:
+    raw = (exc.headers.get("retry-after") if exc.headers else None) or ""
+    try:
+        seconds = float(raw)
+    except ValueError:
+        return 1.0
+    return min(seconds, _MAX_WAIT_S) if seconds >= 0 else 1.0
 
 
 def load() -> Mailer:
@@ -243,8 +301,12 @@ def load() -> Mailer:
             "either sends a replyable message from a verified identity, or it does not "
             "run. (Commercial sends additionally need PLATFORM_MAIL_POSTAL_ADDRESS; "
             "sender.py enforces that where the message is composed.)")
-    return SESMailer(sender=config.mail_sender, reply_to=config.mail_reply_to,
-                     region=config.region)
+    if not config.resend_api_key:
+        raise MailNotConfigured(
+            "RESEND_API_KEY is not set, so the platform has no transport. In a "
+            "deployment it comes from SSM /resend/api-key via Terraform.")
+    return ResendMailer(api_key=config.resend_api_key, sender=config.mail_sender,
+                        reply_to=config.mail_reply_to)
 
 
 def compliant_body(body: str, *, postal_address: str, unsubscribe: str) -> str:
@@ -318,7 +380,7 @@ class SMTPMailer:
         message["Reply-To"] = reply_to or self.reply_to
         # The same forensic aid SES gets as a message tag. It is not an idempotency
         # guarantee — SMTP has no such parameter either — and `sender.py`'s claim
-        # discipline remains the actual guarantee. See `SESMailer.send`'s docstring.
+        # discipline remains the actual guarantee. See `ResendMailer`'s docstring.
         message["X-Spindle-Idempotency-Key"] = _tag_value(idempotency_key)
         message.set_content(body)
 

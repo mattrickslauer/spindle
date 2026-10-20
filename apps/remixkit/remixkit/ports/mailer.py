@@ -7,7 +7,7 @@ was sent is worse than one that refuses, so `send()` returns delivery rather tha
 raising, and the caller decides what to tell the user.
 
 Two adapters, same shape as every other port here: `mailer_console` (log it, report
-`delivered=False`) is the zero-credential path, `mailer_zepto` is production.
+`delivered=False`) is the zero-credential path, `mailer_resend` is production.
 """
 
 from __future__ import annotations

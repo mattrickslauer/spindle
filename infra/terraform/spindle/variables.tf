@@ -69,7 +69,7 @@ variable "mail_route53_zone_id" {
 
 variable "mail_sender" {
   type        = string
-  description = "The From address. Must be at mail_domain, or SES rejects every send once the identity is verified."
+  description = "The From address, e.g. spindle@mattrickslauer.com. Its domain must be verified in Resend, or every send is refused (403)."
   default     = ""
 }
 
@@ -99,6 +99,12 @@ variable "mail_postal_address" {
 # The mode is not declared here. It is read off `stripe_secret_key`'s own prefix by
 # `settings.stripe_mode`, so a live deployment is one whose tfvars holds an sk_live_ key
 # — there is no separate flag that could be set to "test" beside a live credential.
+
+variable "resend_api_key_parameter" {
+  type        = string
+  default     = "/resend/api-key"
+  description = "SSM SecureString holding the Resend API key, the platform mail transport. Empty skips the lookup and the console refuses to send, naming RESEND_API_KEY."
+}
 
 variable "stripe_secret_key" {
   type        = string

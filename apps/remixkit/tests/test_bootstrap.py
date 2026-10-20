@@ -153,3 +153,54 @@ def test_the_suite_cannot_reach_ssm_through_a_developers_env_file():
     from remixkit.settings import Settings as S
 
     assert S().ssm_path == "", "a developer's .env must not reach SSM from the suite"
+
+
+# ------------------------------------------------------------------ the shared Resend key
+class FakeSSMByName(FakeSSM):
+    def __init__(self, parameters, named):
+        super().__init__(parameters)
+        self.named = named
+        self.asked: list[str] = []
+
+    def get_parameter(self, *, Name, WithDecryption):  # noqa: N803
+        self.asked.append(Name)
+        if Name not in self.named:
+            raise type("ParameterNotFound", (Exception,), {})()
+        return {"Parameter": {"Name": Name, "Value": self.named[Name]}}
+
+
+def _patch_boto(monkeypatch, ssm):
+    import sys
+    import types
+
+    monkeypatch.setitem(sys.modules, "boto3", types.SimpleNamespace(
+        Session=lambda profile_name=None: types.SimpleNamespace(
+            client=lambda name, region_name=None: ssm)))
+
+
+def test_the_resend_key_is_read_from_its_shared_parameter(monkeypatch):
+    import os
+
+    monkeypatch.delenv("RK_RESEND_API_KEY", raising=False)
+    monkeypatch.delenv("RESEND_API_KEY", raising=False)
+    monkeypatch.setenv("RK_RESEND_KEY_PARAMETER", "/resend/api-key")
+    ssm = FakeSSMByName([("SESSION_SECRET", "s")], {"/resend/api-key": "re_live"})
+    _patch_boto(monkeypatch, ssm)
+    assert bootstrap.load_secrets("/remixkit/prod") == 2
+    assert ssm.asked == ["/resend/api-key"]
+    assert os.environ["RK_RESEND_API_KEY"] == "re_live"
+    assert os.environ["RESEND_API_KEY"] == "re_live"
+
+
+def test_a_missing_resend_parameter_is_skipped_not_fatal(monkeypatch):
+    monkeypatch.delenv("RK_RESEND_API_KEY", raising=False)
+    monkeypatch.setenv("RK_RESEND_KEY_PARAMETER", "/resend/api-key")
+    _patch_boto(monkeypatch, FakeSSMByName([], {}))
+    assert bootstrap.load_secrets("/remixkit/prod") == 0
+
+
+def test_no_resend_parameter_means_it_is_never_asked_for(monkeypatch):
+    ssm = FakeSSMByName([("SESSION_SECRET", "s")], {"/resend/api-key": "re_live"})
+    _patch_boto(monkeypatch, ssm)
+    bootstrap.load_secrets("/remixkit/prod")
+    assert ssm.asked == []

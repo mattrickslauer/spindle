@@ -8,7 +8,7 @@ is additive rather than a rewrite:
     generator_backend  mock   → genblaze
     queue_backend      inline → sqs
     auth_backend       none   → otp
-    mail_backend       console → zeptomail
+    mail_backend       console → resend
 
 `RK_` prefixes everything so these never collide with the provider keys Genblaze reads
 directly from the environment (`GMI_API_KEY`, `B2_KEY_ID`, …).
@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     generator_backend: Literal["mock", "genblaze"] = "mock"
     queue_backend: Literal["inline", "sqs"] = "inline"
     auth_backend: Literal["none", "otp"] = "none"
-    mail_backend: Literal["console", "zeptomail"] = "console"
+    mail_backend: Literal["console", "resend"] = "console"
     # There is no `mock` here on purpose. Every other backend has a zero-credential adapter
     # that does the real thing badly; a fake measurement is a float that nothing downstream
     # could ever tell from a real one. `auto` uses numpy if it is installed and refuses
@@ -109,13 +109,14 @@ class Settings(BaseSettings):
     otp_resend_interval_s: int = 30
 
     # ---- mail ------------------------------------------------------------------
-    # ZeptoMail's SMTP password and its "send mail token" are the same secret.
-    zeptomail_token: str = ""
-    mail_from: str = "rtp@agfarms.dev"
+    # Resend's API key. In a deployment it arrives from the shared SSM parameter
+    # `/resend/api-key` (bootstrap.load_secrets, via RK_RESEND_KEY_PARAMETER); on a
+    # laptop, RK_RESEND_API_KEY in `.env`.
+    resend_api_key: str = ""
+    # Must be on a domain verified in Resend, or the API refuses the send. Not agfarms.dev:
+    # the Resend plan has no room for another domain, so the label sends from mattrickslauer.com.
+    mail_from: str = "rtp@mattrickslauer.com"
     mail_from_name: str = "Respect the Funk"
-    smtp_host: str = "smtp.zeptomail.com"
-    smtp_port: int = 465
-    smtp_user: str = "emailapikey"
 
     @property
     def allowlist(self) -> frozenset[str]:

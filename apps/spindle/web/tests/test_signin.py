@@ -97,11 +97,17 @@ class TransactionalMailIsNotCommercialMail(unittest.TestCase):
 
     def test_a_sender_and_reply_to_are_enough_to_send_a_code(self):
         with _settings(mail_sender="a@b.com", mail_reply_to="a@b.com",
-                       mail_postal_address=""):
+                       mail_postal_address="", resend_api_key="re_test"):
             self.assertTrue(mail.settings_mod.load().transactional_mail_configured)
-            # Builds a real SESMailer rather than raising. No network: constructing the
-            # boto3 client is deferred to `send`.
-            self.assertIsInstance(mail.load(), mail.SESMailer)
+            # Builds a real ResendMailer rather than raising. No network until `send`.
+            self.assertIsInstance(mail.load(), mail.ResendMailer)
+
+    def test_no_resend_key_is_a_refusal_not_a_silent_no_op(self):
+        with _settings(mail_sender="a@b.com", mail_reply_to="a@b.com",
+                       resend_api_key=""):
+            with self.assertRaises(mail.MailNotConfigured) as caught:
+                mail.load()
+        self.assertIn("RESEND_API_KEY", str(caught.exception))
 
     def test_a_missing_postal_address_still_blocks_commercial_mail(self):
         """The half that must not move. `changefeed.py` attaches no outbox sender when

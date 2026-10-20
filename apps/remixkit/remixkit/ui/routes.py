@@ -729,8 +729,8 @@ def settings_page(request: Request, principal: CurrentPrincipal):
              "A credentialed provider — GMI Cloud, or Google via GCP_PROJECT."),
             ("Queue", "RK_QUEUE_BACKEND", settings.queue_backend, "sqs",
              "An SQS queue URL, and Batch to run the generator."),
-            ("Mail", "RK_MAIL_BACKEND", settings.mail_backend, "zeptomail",
-             "A ZeptoMail send token and a verified sender domain."),
+            ("Mail", "RK_MAIL_BACKEND", settings.mail_backend, "resend",
+             "A Resend API key and a sender domain verified in Resend."),
             ("Sign-in", "RK_AUTH_BACKEND", settings.auth_backend, "otp",
              "A session secret and an allowlist — no external service needed."),
             # The only axis whose "real" value is a package rather than a credential, and

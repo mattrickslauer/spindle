@@ -15,6 +15,12 @@ via `.env` on a laptop is read by the same settings field either way. Provider k
 that Genblaze reads directly from the environment (`GMI_API_KEY`, `ELEVENLABS_API_KEY`)
 are additionally exported unprefixed, because those are read by the library, not by us.
 
+One secret lives outside that path: the Resend API key is shared across projects at
+`/resend/api-key`. When `RK_RESEND_KEY_PARAMETER` names it, it is fetched as well and
+lands as `RK_RESEND_API_KEY` (and `RESEND_API_KEY`). A missing parameter is skipped with
+a warning, like a placeholder; `mail_backend=resend` then refuses to start for want of
+the key, which names the problem.
+
 Failure is fatal on purpose. A process that cannot read its credentials should not come
 up and serve errors; it should refuse to start, where a deployment notices.
 """
@@ -57,7 +63,8 @@ def load_secrets(
     authentication error that says nothing about which identity it tried.
     """
     path = path or os.environ.get("RK_SSM_PATH", "")
-    if not path:
+    resend_parameter = os.environ.get("RK_RESEND_KEY_PARAMETER", "")
+    if not path and not resend_parameter:
         return 0
 
     region = region or os.environ.get("RK_AWS_REGION") or os.environ.get("AWS_REGION") or "us-east-1"
@@ -73,6 +80,11 @@ def load_secrets(
     session = boto3.Session(profile_name=profile) if profile else boto3.Session()
     client = session.client("ssm", region_name=region)
     loaded = 0
+
+    if resend_parameter:
+        loaded += _load_resend_key(client, resend_parameter)
+    if not path:
+        return loaded
 
     paginator = client.get_paginator("get_parameters_by_path")
     for page in paginator.paginate(Path=path, Recursive=True, WithDecryption=True):
@@ -94,6 +106,22 @@ def load_secrets(
 
     log.info("loaded %d secret(s) from SSM path %s", loaded, path)
     return loaded
+
+
+def _load_resend_key(client, name: str) -> int:
+    """The one parameter read by name rather than by path. Returns 1 if it landed."""
+    try:
+        value = client.get_parameter(Name=name, WithDecryption=True)["Parameter"].get("Value", "")
+    except Exception as exc:  # noqa: BLE001 - botocore's ParameterNotFound is a dynamic class
+        if type(exc).__name__ != "ParameterNotFound":
+            raise
+        value = ""
+    if not value or value.startswith("PLACEHOLDER"):
+        log.warning("SSM parameter %s is unset — skipping", name)
+        return 0
+    os.environ.setdefault("RK_RESEND_API_KEY", value)
+    os.environ.setdefault("RESEND_API_KEY", value)
+    return 1
 
 
 def export_for_libs(settings) -> list[str]:

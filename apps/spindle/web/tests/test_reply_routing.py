@@ -23,44 +23,41 @@ HAVE_DB = bool(os.environ.get("DATABASE_URL"))
 
 
 class ReplyToIsPerMessageAndNotPerMailer(unittest.TestCase):
-    """`SESMailer` has always held one `reply_to` for its whole life, which was right
-    while every message went to the same mailbox. A per-thread token cannot work that
-    way — the address differs per send — so `send` grows the parameter."""
+    """The platform mailer used to hold one `reply_to` for its whole life, which was
+    right while every message went to the same mailbox. A per-thread token cannot work
+    that way — the address differs per send — so `send` grows the parameter."""
 
-    def _ses(self):
-        return mail.SESMailer(sender="spindle@example.com",
-                              reply_to="spindle@example.com", region="us-east-1")
+    def _send(self, **kwargs) -> dict:
+        import io
+        import json
 
-    def test_a_per_message_reply_to_reaches_ses(self) -> None:
-        captured: dict = {}
+        captured: list = []
 
-        class FakeClient:
-            def send_email(self, **kwargs):
-                captured.update(kwargs)
-                return {"MessageId": "ses-1"}
+        class _Answer(io.BytesIO):
+            def __enter__(self):
+                return self
 
-        with mock.patch("boto3.client", return_value=FakeClient()):
-            self._ses().send(to="curator@example.org", subject="s", body="b",
-                             idempotency_key="k",
-                             reply_to="spindle+tok123@example.com")
+            def __exit__(self, *exc):
+                return False
 
-        self.assertEqual(captured["ReplyToAddresses"], ["spindle+tok123@example.com"])
+        def urlopen(request, timeout=None):
+            captured.append(json.loads(request.data))
+            return _Answer(b'{"id":"r-1"}')
+
+        mail.ResendMailer(api_key="re_test", sender="spindle@example.com",
+                          reply_to="spindle@example.com", urlopen=urlopen).send(
+            to="curator@example.org", subject="s", body="b", idempotency_key="k",
+            **kwargs)
+        return captured[0]
+
+    def test_a_per_message_reply_to_reaches_resend(self) -> None:
+        sent = self._send(reply_to="spindle+tok123@example.com")
+        self.assertEqual(sent["reply_to"], "spindle+tok123@example.com")
 
     def test_omitting_it_falls_back_to_the_configured_address(self) -> None:
         """Transactional mail — the OTP codes — has no thread and wants the plain
         mailbox. It must keep working without passing anything."""
-        captured: dict = {}
-
-        class FakeClient:
-            def send_email(self, **kwargs):
-                captured.update(kwargs)
-                return {"MessageId": "ses-1"}
-
-        with mock.patch("boto3.client", return_value=FakeClient()):
-            self._ses().send(to="someone@example.org", subject="s", body="b",
-                             idempotency_key="k")
-
-        self.assertEqual(captured["ReplyToAddresses"], ["spindle@example.com"])
+        self.assertEqual(self._send()["reply_to"], "spindle@example.com")
 
 
 class TheTierDecidesWhoseAddressSends(unittest.TestCase):

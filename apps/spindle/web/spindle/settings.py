@@ -45,6 +45,9 @@ class Settings:
     stripe_price_roster: str
     stripe_price_label_live: str
     stripe_price_roster_live: str
+    #: Resend's API key — the platform transport. Defaulted so a Settings built by hand
+    #: (the billing tests do) need not name it. Empty means `mail.load()` refuses.
+    resend_api_key: str = ""
 
     @property
     def configured(self) -> bool:
@@ -359,6 +362,9 @@ def load() -> Settings:
         # with all six empty, which is not an accident of the implementation but the
         # requirement it was built to: the tier a judge uses cannot depend on a payment
         # provider being configured.
+        # The platform mail transport. Terraform reads it from SSM `/resend/api-key`
+        # and passes it in the function's environment, the same way Stripe's key arrives.
+        resend_api_key=os.environ.get("RESEND_API_KEY", ""),
         stripe_secret_key=os.environ.get("STRIPE_SECRET_KEY", ""),
         # Stripe signs every webhook with this and `billing.verify_signature` checks it.
         # Absent, the webhook refuses every request rather than trusting the body — an

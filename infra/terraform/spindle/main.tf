@@ -253,19 +253,26 @@ resource "aws_ses_domain_mail_from" "mail" {
   behavior_on_mx_failure = "UseDefaultValue"
 }
 
-resource "aws_iam_role_policy" "console_send_mail" {
-  count = var.mail_domain == "" ? 0 : 1
-  name  = "${local.name}-send-mail"
-  role  = aws_iam_role.console.id
+# `console_send_mail` (ses:SendEmail on the identity) was here until 2026-10-19. The
+# console now sends through Resend — see the `resend` data source below and mail.py —
+# so the role needs no SES authority. The identity, DKIM and MAIL FROM resources above
+# stay: deleting them would tear DNS records out from under a verified domain for no
+# gain, and they cost nothing.
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["ses:SendEmail", "ses:SendRawEmail"]
-      Resource = [aws_ses_domain_identity.mail[0].arn]
-    }]
-  })
+# ------------------------------------------------------------------------- Resend
+#
+# The platform mail transport's key, shared across projects at one SSM SecureString.
+# Read at plan time and passed in the function's environment — the same route
+# `stripe_secret_key` takes, so the value lands in state and in the (KMS-encrypted)
+# Lambda configuration exactly as Stripe's does. The parameter must exist before a plan:
+#
+#   aws ssm put-parameter --name /resend/api-key --type SecureString --value "re_…"
+#
+# Empty `resend_api_key_parameter` skips the lookup; `mail.load()` then refuses by name.
+data "aws_ssm_parameter" "resend" {
+  count           = var.resend_api_key_parameter == "" ? 0 : 1
+  name            = var.resend_api_key_parameter
+  with_decryption = true
 }
 
 resource "aws_iam_role_policy" "masters" {
@@ -464,6 +471,12 @@ resource "aws_lambda_function" "console" {
       PLATFORM_MAIL_SENDER         = var.mail_sender
       PLATFORM_MAIL_REPLY_TO       = var.mail_reply_to
       PLATFORM_MAIL_POSTAL_ADDRESS = var.mail_postal_address
+      # The transport for the address above. See the `resend` data source.
+      RESEND_API_KEY = (
+        length(data.aws_ssm_parameter.resend) > 0
+        ? data.aws_ssm_parameter.resend[0].value
+        : ""
+      )
       # Empty is a legitimate state in a checkout that has never applied this stack,
       # and `settings.storage_configured` reports it. Here it is always set, so the
       # console offers uploads. AWS_REGION is provided by the runtime itself, which

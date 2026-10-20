@@ -61,8 +61,8 @@ variable "queue_backend" {
 #
 #   1. aws ssm put-parameter --name /remixkit/prod/SESSION_SECRET  --type SecureString \
 #        --value "$(python -c 'import secrets;print(secrets.token_urlsafe(32))')" --overwrite
-#   2. aws ssm put-parameter --name /remixkit/prod/ZEPTOMAIL_TOKEN --type SecureString \
-#        --value "…" --overwrite
+#   2. aws ssm put-parameter --name /resend/api-key --type SecureString \
+#        --value "re_…" --overwrite      # shared with other projects; may already exist
 #
 # Secrets first, in that order: a console that turns on auth before it can sign or send
 # is one nobody can enter, including whoever needs to fix it. With `require_auth = true`
@@ -84,15 +84,15 @@ variable "require_auth" {
 
 variable "mail_backend" {
   type    = string
-  default = "zeptomail"
+  default = "resend"
 }
 
 variable "mail_from" {
   type = string
-  # A verified ZeptoMail sender on a domain with SPF/DKIM already published. A sign-in
-  # code from an unverified domain is silently spam-filed, which is indistinguishable
-  # from a broken login.
-  default = "rtp@agfarms.dev"
+  # Must be on a domain verified in Resend (mattrickslauer.com is; agfarms.dev cannot be
+  # added on the current plan). Resend refuses an unverified From outright, and the
+  # console then says the code could not be sent.
+  default = "rtp@mattrickslauer.com"
 }
 
 variable "gcp_project" {

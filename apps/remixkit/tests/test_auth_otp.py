@@ -25,7 +25,7 @@ SECRET = "test-secret-not-the-real-one"
 
 
 class FakeMailer:
-    """A mailer that succeeds and remembers. Standing in for ZeptoMail."""
+    """A mailer that succeeds and remembers. Standing in for Resend."""
 
     name = "fake"
 
