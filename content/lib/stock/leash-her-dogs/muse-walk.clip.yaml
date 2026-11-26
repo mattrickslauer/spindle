@@ -1,0 +1,65 @@
+schema: rtf.clip/v1
+id: muse-walk
+media: muse-walk.mp4
+title: the muse, composed, holding a fistful of leashes attached to nothing
+logline: the muse, composed, holding a fistful of leashes attached to nothing
+source_meta:
+  duration_ms: 7625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: generated
+  owner: Just One Branch
+  license: owned
+  notes: 'generated: gemini-3.1-flash-image -> veo-3.1-fast-generate-preview'
+provenance:
+  file: /home/mattricks/Code/spindle/.claude/worktrees/top-muse-meme/content/.cache/gen/veo-c57a21b70be6ea88.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 7.625
+  image_model: gemini-3.1-flash-image
+  video_model: veo-3.1-fast-generate-preview
+  motion: Slow-motion walk toward camera, dress moving, the empty leashes dragging
+    and bouncing on the polished floor. She does not look down. Slow dolly back.
+  image: A glamorous woman in a flowing gold satin dress and oversized sunglasses
+    walks toward camera down a museum gallery, chin up, perfectly composed. In one
+    hand she holds six empty dog leashes that trail behind her on the floor, attached
+    to nothing.
+  frame: null
+features:
+  energy: 0.431
+  luma: 0.297
+  contrast: 0.654
+  warmth: 0.732
+  saturation: 0.176
+  detail: 0.143
+  intensity_raw: 0.381
+axes:
+  light:
+    v: 0.297
+    pole: dark
+  motion:
+    v: 0.431
+    pole: mid
+  temp:
+    v: 0.732
+    pole: warm
+  scale:
+    v: 0.143
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 7625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true

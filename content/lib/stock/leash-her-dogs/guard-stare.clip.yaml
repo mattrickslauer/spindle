@@ -1,0 +1,63 @@
+schema: rtf.clip/v1
+id: guard-stare
+media: guard-stare.mp4
+title: the museum guard realising
+logline: the museum guard realising
+source_meta:
+  duration_ms: 7625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: generated
+  owner: Just One Branch
+  license: owned
+  notes: 'generated: gemini-3.1-flash-image -> veo-3.1-fast-generate-preview'
+provenance:
+  file: /home/mattricks/Code/spindle/.claude/worktrees/top-muse-meme/content/.cache/gen/veo-9b71160fc72e93bd.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 7.625
+  image_model: gemini-3.1-flash-image
+  video_model: veo-3.1-fast-generate-preview
+  motion: The guard's eyes widen, he slowly lowers the walkie-talkie and his jaw drops.
+    Handheld camera, slight push in on his face.
+  image: A tired middle-aged museum security guard in a navy uniform stands in a gallery
+    doorway, looking off-camera with dawning horror, walkie-talkie raised halfway.
+  frame: null
+features:
+  energy: 0.608
+  luma: 0.216
+  contrast: 0.789
+  warmth: 0.582
+  saturation: 0.134
+  detail: 0.095
+  intensity_raw: 0.472
+axes:
+  light:
+    v: 0.216
+    pole: dark
+  motion:
+    v: 0.608
+    pole: kinetic
+  temp:
+    v: 0.582
+    pole: mid
+  scale:
+    v: 0.095
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 7625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true

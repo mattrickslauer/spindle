@@ -109,6 +109,10 @@ content/demo/video/out/broll-frames/
 !content/videos/demo-founder/*.png
 !content/videos/demo-founder/*.webm
 
+# Burn-in subtitles meme_engine.py writes next to each render (write_ass); rebuilt
+# from the plan + lyrics on every run, so they are output, not source.
+content/videos/**/*.ass
+
 # ---------------------------------------------------------------- vendored binaries
 # 38MB standalone; fetch it rather than carry it.
 content/bin/yt-dlp

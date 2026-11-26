@@ -1,0 +1,89 @@
+schema: rtf.genbrief/v1
+id: leash-her-dogs
+owner: Just One Branch
+song: top-muse
+# Not an ad. The lyric is the joke: "She has some issues … No no no no. She doesn't
+# want to leash her dogs." The build is elegance under a gallery spotlight; the drop is
+# the dogs. No end card, no "stream now" — a sound tag, the way a TikTok sound is credited.
+#
+# One look for every shot, so a generated library cuts like one video: the cover's
+# palette (peach, gold, sea-blue) and a museum at night.
+style: >
+  Cinematic 35mm photograph, vertical 9:16 composition. An elegant art museum after
+  hours: deep green-grey walls, ornate gilded frames, warm spotlights, polished wooden
+  floor. Palette of peach, gold and soft sea-blue, fine film grain. Photoreal, no text,
+  no logos, no watermarks.
+
+shots:
+  # --- build: composure ("She has some issues")
+  - id: muse-walk
+    wants: the muse, composed, holding a fistful of leashes attached to nothing
+    image: >
+      A glamorous woman in a flowing gold satin dress and oversized sunglasses walks
+      toward camera down a museum gallery, chin up, perfectly composed. In one hand she
+      holds six empty dog leashes that trail behind her on the floor, attached to nothing.
+    motion: >
+      Slow-motion walk toward camera, dress moving, the empty leashes dragging and
+      bouncing on the polished floor. She does not look down. Slow dolly back.
+  - id: muse-alive
+    wants: the cover's gold face waking up
+    frame: ~/Code/J1B/masters/art/top-muse.png
+    crop: [0.12, 0.05, 0.76, 0.85]
+    motion: >
+      The torn-paper collage comes alive: the gold sculpted face slowly opens its eyes
+      wider and gives a slight knowing smirk with the red lips, clouds drift gently
+      around it, the painted sea shimmers and the palm fronds sway. Subtle, magical,
+      the collage texture stays.
+  - id: portrait-dog
+    wants: a dog has hung itself in a frame as the museum's top muse
+    image: >
+      A regal afghan hound with long flowing silky hair sits perfectly still inside a
+      huge ornate gilded picture frame hanging on a museum wall, posing like an old
+      master portrait, spotlit from above. A small museum placard beside it.
+    motion: >
+      The afghan hound holds its noble pose, then slowly turns its head to stare
+      directly into camera. Its hair shifts slightly. Very slow push in.
+  - id: guard-stare
+    wants: the museum guard realising
+    image: >
+      A tired middle-aged museum security guard in a navy uniform stands in a gallery
+      doorway, looking off-camera with dawning horror, walkie-talkie raised halfway.
+    motion: >
+      The guard's eyes widen, he slowly lowers the walkie-talkie and his jaw drops.
+      Handheld camera, slight push in on his face.
+
+  # --- drop: the dogs ("She doesn't want to leash her dogs")
+  - id: dogs-stampede
+    wants: the pack, loose in the gallery
+    image: >
+      Low angle at floor level in a long museum gallery: a pack of eight joyful dogs of
+      mixed breeds — a greyhound, a dalmatian, a corgi, a poodle, a golden retriever —
+      galloping straight toward camera past gilded paintings, ears flying.
+    motion: >
+      The dogs sprint toward camera and past it at full speed, paws skidding on the
+      polished floor, tongues out, pure chaos. Low tracking camera moving backwards fast.
+  - id: corgi-slide
+    wants: a corgi losing traction on the parquet
+    image: >
+      A corgi mid-run on a glossy museum parquet floor between marble statues, legs
+      splayed, sliding sideways, ears back, delighted.
+    motion: >
+      The corgi skids sideways across the glossy floor in slow motion, spins a full
+      circle, recovers and sprints off. Camera pans to follow.
+  - id: dalmatian-bench
+    wants: a dalmatian taking the visitor's bench
+    image: >
+      A dalmatian standing on a museum viewing bench in the middle of a gallery, in
+      front of a large gilded painting, barking joyfully, a knocked-over velvet rope
+      barrier on the floor beside it.
+    motion: >
+      The dalmatian bounces on the bench barking, then leaps off the bench toward
+      camera. Quick handheld whip pan.
+  - id: poodle-zoomies
+    wants: zoomies around the sculpture plinth
+    image: >
+      A white standard poodle with a fluffy show cut doing zoomies in circles around a
+      marble sculpture on a plinth in a museum rotunda, motion blur, gold spotlight.
+    motion: >
+      The poodle races in tight fast circles around the plinth again and again, fur
+      bouncing, gravel-fast, camera orbiting slowly the opposite way.

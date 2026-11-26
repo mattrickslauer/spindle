@@ -1,0 +1,63 @@
+schema: rtf.clip/v1
+id: corgi-slide
+media: corgi-slide.mp4
+title: a corgi losing traction on the parquet
+logline: a corgi losing traction on the parquet
+source_meta:
+  duration_ms: 7625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: generated
+  owner: Just One Branch
+  license: owned
+  notes: 'generated: gemini-3.1-flash-image -> veo-3.1-fast-generate-preview'
+provenance:
+  file: /home/mattricks/Code/spindle/.claude/worktrees/top-muse-meme/content/.cache/gen/veo-bf4f650cc9e02164.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 7.625
+  image_model: gemini-3.1-flash-image
+  video_model: veo-3.1-fast-generate-preview
+  motion: The corgi skids sideways across the glossy floor in slow motion, spins a
+    full circle, recovers and sprints off. Camera pans to follow.
+  image: A corgi mid-run on a glossy museum parquet floor between marble statues,
+    legs splayed, sliding sideways, ears back, delighted.
+  frame: null
+features:
+  energy: 1.0
+  luma: 0.361
+  contrast: 0.816
+  warmth: 0.774
+  saturation: 0.208
+  detail: 0.122
+  intensity_raw: 0.673
+axes:
+  light:
+    v: 0.361
+    pole: dark
+  motion:
+    v: 1.0
+    pole: kinetic
+  temp:
+    v: 0.774
+    pole: warm
+  scale:
+    v: 0.122
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 7625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true

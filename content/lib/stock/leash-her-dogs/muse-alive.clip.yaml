@@ -1,0 +1,64 @@
+schema: rtf.clip/v1
+id: muse-alive
+media: muse-alive.mp4
+title: the cover's gold face waking up
+logline: the cover's gold face waking up
+source_meta:
+  duration_ms: 7625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: generated
+  owner: Just One Branch
+  license: owned
+  notes: 'generated: owned art -> veo-3.1-fast-generate-preview'
+provenance:
+  file: /home/mattricks/Code/spindle/.claude/worktrees/top-muse-meme/content/.cache/gen/veo-acc1927ee45cc6b2.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 7.625
+  image_model: null
+  video_model: veo-3.1-fast-generate-preview
+  motion: 'The torn-paper collage comes alive: the gold sculpted face slowly opens
+    its eyes wider and gives a slight knowing smirk with the red lips, clouds drift
+    gently around it, the painted sea shimmers and the palm fronds sway. Subtle, magical,
+    the collage texture stays.'
+  image: null
+  frame: ~/Code/J1B/masters/art/top-muse.png
+features:
+  energy: 0.153
+  luma: 0.673
+  contrast: 0.801
+  warmth: 0.933
+  saturation: 0.332
+  detail: 0.271
+  intensity_raw: 0.336
+axes:
+  light:
+    v: 0.673
+    pole: bright
+  motion:
+    v: 0.153
+    pole: still
+  temp:
+    v: 0.933
+    pole: warm
+  scale:
+    v: 0.271
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 7625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true

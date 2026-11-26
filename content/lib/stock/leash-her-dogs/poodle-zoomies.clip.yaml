@@ -1,0 +1,63 @@
+schema: rtf.clip/v1
+id: poodle-zoomies
+media: poodle-zoomies.mp4
+title: zoomies around the sculpture plinth
+logline: zoomies around the sculpture plinth
+source_meta:
+  duration_ms: 7625
+  width: 1080
+  height: 1920
+  fps: 30
+  aspect: '9:16'
+rights:
+  source: generated
+  owner: Just One Branch
+  license: owned
+  notes: 'generated: gemini-3.1-flash-image -> veo-3.1-fast-generate-preview'
+provenance:
+  file: /home/mattricks/Code/spindle/.claude/worktrees/top-muse-meme/content/.cache/gen/veo-05ca5b8f5cd2de98.mp4
+  kind: video
+  crop: null
+  section_start_s: 0.125
+  section_dur_s: 7.625
+  image_model: gemini-3.1-flash-image
+  video_model: veo-3.1-fast-generate-preview
+  motion: The poodle races in tight fast circles around the plinth again and again,
+    fur bouncing, gravel-fast, camera orbiting slowly the opposite way.
+  image: A white standard poodle with a fluffy show cut doing zoomies in circles around
+    a marble sculpture on a plinth in a museum rotunda, motion blur, gold spotlight.
+  frame: null
+features:
+  energy: 0.777
+  luma: 0.246
+  contrast: 0.827
+  warmth: 0.717
+  saturation: 0.17
+  detail: 0.113
+  intensity_raw: 0.566
+axes:
+  light:
+    v: 0.246
+    pole: dark
+  motion:
+    v: 0.777
+    pole: kinetic
+  temp:
+    v: 0.717
+    pole: warm
+  scale:
+    v: 0.113
+    pole: wide
+role:
+  primary: b_roll
+  can_lead: true
+  can_follow: true
+  min_useful_ms: 400
+cut_points:
+- t: 0
+  kind: in
+- t: 7625
+  kind: hard_cut
+screen:
+  verdict: owned
+  usable: true
