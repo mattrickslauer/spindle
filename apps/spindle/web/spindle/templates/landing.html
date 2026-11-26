@@ -123,6 +123,47 @@ section{padding:64px 0;border-top:1px solid var(--rule)}
 section h2{font-size:clamp(21px,2.7vw,29px);max-width:24ch}
 section .lede{color:var(--dim);max-width:66ch;margin:16px 0 0}
 
+/* ---------- the walkthrough ----------
+   The 16:9 box is pinned on the frame rather than left to the still, so the click
+   that swaps an <img> for an <iframe> cannot move the page under a reader who is
+   already scrolling. Both children take the same rule, for that reason. */
+.reel{margin:34px 0 0;border:1px solid var(--rule);border-radius:12px;
+  background:var(--panel);overflow:hidden}
+.reel-play,.reel-frame{display:block;width:100%;aspect-ratio:16/9;border:0}
+.reel-play{position:relative;padding:0;background:var(--ground);color:inherit;
+  appearance:none;cursor:pointer}
+.reel-still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:.84;transition:opacity .18s}
+.reel-play:hover .reel-still{opacity:1}
+.reel-play:focus-visible{outline:2px solid var(--carrier);outline-offset:-2px}
+/* Warm pole, and not a free choice: `_design.html` reserves `--phosphor` for the
+   thing being put in front of a person, and this is the only control in the
+   section. A teal play button would be claiming to be a readout — the same
+   mistake the `.signup` rules further up this file are commented against. */
+.reel-glyph{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:74px;height:74px;border-radius:50%;display:grid;place-items:center;
+  background:var(--phosphor);color:var(--ground);box-shadow:var(--shadow);
+  transition:transform .18s,filter .18s}
+.reel-glyph svg{width:29px;height:29px;margin-left:3px}
+.reel-play:hover .reel-glyph{transform:translate(-50%,-50%) scale(1.06);
+  filter:brightness(1.08)}
+/* The run time, on the still. "How long is this" is the only question a reader
+   has before deciding whether to press it, and it should not cost them a click
+   to somebody else's site to find out. */
+.reel-len{position:absolute;right:12px;bottom:12px;padding:5px 8px;border-radius:5px;
+  background:color-mix(in srgb,var(--ground) 84%,transparent);
+  border:1px solid var(--rule-strong);font:600 11px/1 var(--face-display);
+  color:var(--ink);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.reel figcaption{padding:14px 17px;border-top:1px solid var(--rule);
+  background:var(--panel-2);display:flex;gap:6px 18px;flex-wrap:wrap;
+  align-items:baseline;font:11.5px/1.6 var(--face-display);color:var(--faint)}
+.reel figcaption b{color:var(--ink);font-weight:600;font-size:12.5px}
+.reel figcaption a{color:var(--carrier)}
+@media (max-width:620px){
+  .reel-glyph{width:56px;height:56px}
+  .reel-glyph svg{width:23px;height:23px}
+}
+
 /* ---------- two-column claims ---------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:34px}
 .card{border:1px solid var(--rule);border-radius:11px;background:var(--panel);padding:20px}
@@ -744,6 +785,64 @@ footer a{color:var(--carrier)}
        it is made properly in `#pricing`, where a cap is a predicate rather than a
        four-decimal number with no denominator. #}
   </div>
+
+  <!-- ===================== THE WALKTHROUGH =====================
+       Unnumbered, and first, on purpose. Every section below this one is something
+       the reader can drive — a map that answers a click, an index prefix they can
+       unbind, a cap they can drag until the gate refuses. This is the only thing on
+       the page that is a *recording*, and it earns its place by making no claim the
+       sections underneath it do not also make live. It is here rather than at the
+       foot because two minutes of narration is the cheapest way to learn what the
+       rest of the page is proving, and a reader who would rather be shown than read
+       should not have to scroll past the whole argument to find that out.
+
+       It is a facade, not an embed. The still is an <img> and the player does not
+       exist until somebody presses the button, so the page loads with no
+       third-party script and sets no third-party cookie — and the click loads
+       `youtube-nocookie.com` rather than the ordinary host. Same discipline as the
+       music box further down: nothing runs, and nothing is fetched from anybody
+       else, until a person asks for it.
+
+       The still is a remote URL because this app has no static mount — the same
+       constraint that made the minuet in `#tick` a synthesised one. -->
+  <section id="walkthrough">
+    <div class="eyebrow">Two minutes, forty-six seconds</div>
+    <h2>The whole system, narrated, before you drive it yourself.</h2>
+    <p class="lede">Recorded against the deployment serving this page — the same
+      cluster, the same console, the same counts you can see above. Everything it
+      claims has a section below it that you can check without an account, so treat
+      it as the tour and the rest of this page as the proof.</p>
+
+    <figure class="reel">
+      {# The button *is* the frame. The still carries `alt=""` because it is a video
+         frame with nothing in it a caption does not already say, and the accessible
+         name of the control names the film and its length instead. #}
+      <button type="button" class="reel-play" id="reel-play"
+              aria-label="Play the Spindle walkthrough — 2 minutes 46 seconds">
+        {# `onerror` is inline, which this file otherwise never does, because it is
+           the one handler that has to be bound before the request it guards can
+           fail — the script at the foot of the page may not have run yet.
+           `maxresdefault` exists for this video; `hqdefault` always exists. #}
+        <img class="reel-still" width="1280" height="720" alt="" decoding="async"
+             src="https://i.ytimg.com/vi/eL34tdFCNQ4/maxresdefault.jpg"
+             onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/eL34tdFCNQ4/hqdefault.jpg'">
+        <span class="reel-glyph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5.2v13.6a1 1 0 0 0 1.53.85l10.6-6.8a1 1 0 0 0 0-1.7L9.53 4.35A1 1 0 0 0 8 5.2z"/>
+          </svg>
+        </span>
+        <span class="reel-len" aria-hidden="true">2:46</span>
+      </button>
+      <figcaption>
+        <b>Spindle — Agentic Music Distribution (CockroachDB × AWS Hackathon)</b>
+        {# The outbound link is not a fallback for the player, it is a fallback for
+           the reader: somebody with JavaScript off gets a still and a button that
+           does nothing, and this is the row that still works for them. #}
+        <span>Plays here, in place. <a href="https://youtu.be/eL34tdFCNQ4"
+          rel="noopener" target="_blank">Watch it on YouTube</a> if you would rather.</span>
+      </figcaption>
+    </figure>
+  </section>
 
   <!-- ===================== 0. THE REACH MAP =====================
        Everything in this section is drawn from `GET /public/index`, which is one
@@ -1409,6 +1508,45 @@ footer a{color:var(--carrier)}
 </div>
 
 <script>
+/* =========================== the walkthrough ===========================
+   The whole of the facade. The <img> and the button are in the markup; the player
+   is built here, on the click, and never before it — which is what keeps a reader
+   who only scrolls past this section out of Google's logs entirely.
+
+   `autoplay=1` is honest rather than rude: the iframe is created by a real user
+   gesture and replaces the control that gesture pressed, so the reader has already
+   asked for exactly this. Autoplaying on load would be the opposite and is why
+   nothing here runs without the button.
+
+   `{once:true}` because the button is gone after the first click — the listener
+   outliving its element is a leak with no second job to do.
+   ====================================================================== */
+(function () {
+  var btn = document.getElementById('reel-play');
+  if (!btn || !btn.parentNode) return;
+  var VID = 'eL34tdFCNQ4';
+  var TITLE = 'Spindle — Agentic Music Distribution (CockroachDB × AWS Hackathon)';
+
+  btn.addEventListener('click', function () {
+    var f = document.createElement('iframe');
+    f.className = 'reel-frame';
+    /* `rel=0` keeps the end card to this channel, so a page arguing for itself does
+       not hand its last frame to whatever YouTube would rather show. */
+    f.src = 'https://www.youtube-nocookie.com/embed/' + VID +
+            '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
+    f.title = TITLE;
+    f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; ' +
+              'gyroscope; picture-in-picture; web-share';
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    f.allowFullscreen = true;
+    btn.parentNode.replaceChild(f, btn);
+    /* Focus follows the swap. Without it a keyboard reader who pressed the button
+       is left with focus on a node that is no longer in the document, and the next
+       Tab starts again from the top of the page. */
+    f.focus();
+  }, { once: true });
+})();
+
 /* ============================ the reach map ============================
    Draws `GET /public/index` onto `GET /public/world.json`. Both are public, both
    are read-only, and everything below is presentation — no number is computed here

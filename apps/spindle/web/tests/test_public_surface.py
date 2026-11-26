@@ -206,6 +206,48 @@ def test_landing_renders(env: Environment) -> None:
     assert 'href="/manual"' in html, "the two public pages must link to each other"
 
 
+def _uncommented(src: str) -> str:
+    """A template with every comment removed — CSS, Jinja and HTML alike.
+
+    The same lesson `_tokens` records, one layer up. These templates document their
+    own rules in prose, so a test that greps for the construct a rule forbids finds
+    the sentence forbidding it and fails on the comment that exists to prevent the
+    bug. Strip first, then assert, or the better-commented file is the one that
+    fails.
+    """
+    for pattern in (r"/\*.*?\*/", r"\{#.*?#\}", r"<!--.*?-->"):
+        src = re.sub(pattern, "", src, flags=re.DOTALL)
+    return src
+
+
+def test_landing_walkthrough_is_a_facade_not_an_embed() -> None:
+    """The demo film loads nothing from Google until somebody presses the button.
+
+    The obvious way to put a video on a page is to paste YouTube's `<iframe>` into
+    the markup, and it costs every reader who merely scrolls past a third-party
+    request and a cookie they did not ask for. The still is an `<img>`, the player
+    is built in the click handler, and the host it is built against is the no-cookie
+    one. All three are load-bearing and all three are cheap to undo by accident, so
+    each is asserted rather than left to a comment.
+    """
+    html = _uncommented((TEMPLATES / "landing.html").read_text(encoding="utf-8"))
+
+    assert "<iframe" not in html, (
+        "the landing page ships an iframe in its markup. The walkthrough is a "
+        "facade — the player is created in the click handler or not at all."
+    )
+    assert "youtube-nocookie.com/embed/" in html, (
+        "the walkthrough must load the no-cookie host"
+    )
+    assert "youtube.com/embed/" not in html.replace("youtube-nocookie.com/embed/", ""), (
+        "the ordinary embed host is back; it sets a cookie the no-cookie one does not"
+    )
+    assert "autoplay=1" in html, (
+        "the player replaces the control that was pressed, so it has to start — "
+        "otherwise the click reads as broken and the reader presses play twice"
+    )
+
+
 def test_landing_pins_the_lathe_ground() -> None:
     """The landing page is a room you monitor at night. It does not follow the reader's
     system setting the way the manual does, and the attribute is what says so."""
